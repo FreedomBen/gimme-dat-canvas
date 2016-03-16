@@ -1,7 +1,9 @@
-postgres:
+canvas-postgres:
   image: postgres:9.3
+  volumes:
+    - "./pg_data:/var/lib/postgresql/data"
 
-redis:
+canvas-redis:
   image: redis:2.6
 
 # To add cassandra
@@ -9,39 +11,35 @@ redis:
 # - Uncomment cassandra line in 'web' below
 # - Uncomment configuration in config/cassandra.yml
 # - See config/cassandra.yml.example for further setup instructions
-# cassandra:
+# canvas-cassandra:
 #   image: cassandra:2.2
 #   environment:
 #     CASSANDRA_START_RPC: 'true'
 
-consul:
+canvas-consul:
   image: gliderlabs/consul-server:0.5
   command: -node canvas-consul -bootstrap
   environment:
     GOMAXPROCS: "2"
 
-kinesis:
+canvas-kinesis:
   image: instructure/kinesalite
   environment:
     VIRTUAL_HOST: kinesis.docker
     VIRTUAL_PORT: 4567
 
-web: &WEB
-  build: .
-  volumes:
-    - "canvas-gems:/home/docker/.gem/ruby/2.1.0"
-    - ".:/usr/src/app"
+canvas-web: &WEB
+  image: gimme-dat-canvas
   links:
-    - consul
-    - postgres
-    - redis
-#    - cassandra
-#    - selenium
-    - kinesis
+    - canvas-consul
+    - canvas-postgres
+    - canvas-redis
+#    - canvas-cassandra
+    - canvas-kinesis
   environment:
     RACK_ENV: development
-    VIRTUAL_HOST: .canvas.docker
+    VIRTUAL_HOST: canvas.docker
 
-jobs:
+canvas-jobs:
   <<: *WEB
   command: bundle exec script/delayed_job run

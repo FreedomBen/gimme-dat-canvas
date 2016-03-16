@@ -7,8 +7,9 @@ else
   exit 1
 fi
 
-docker-compose up postgres
+docker-compose up -d canvas-postgres
 
-green "Sleeping while postgres initializes"
+green "Sleeping for 10 seconds to give postgres time to initialize"
+sleep 10 
 
-docker run --rm gimme-dat-canvas /usr/src/app/setup-db.sh
+docker-compose run --rm canvas-web /usr/src/app/setup-db.sh
