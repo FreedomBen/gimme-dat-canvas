@@ -58,6 +58,16 @@ canvas-jobs:
   command: bundle exec script/delayed_job run
 ```
 
+Great!  Now before running it for the first time you need to setup the database.  You can run the provided script:
+
+```
+docker-compose run --rm canvas-web /usr/src/app/setup-db.sh
+```
+
+*NOTE:  If you get an error, you might need to bring up the postgres container first to let it initialize itself before attempting to setup the database.*
+
+You should now be able to log in as `andy.reid@example.com` with password `password`
+
 ### Build your own image
 
 Clone this repo:
