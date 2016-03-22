@@ -11,9 +11,11 @@ services here, and using a reverse proxy will make your life better.*
 ### Run it stand-alone
 
 If you clone this repo, there's a script called `run-dat-container.sh` that you can run
-and it'll do it all for you.  However, you probably will want to integrate this into your
-project as an appliance (see next section).  If you want to build your own image, you'll
-need to change the name in the `docker-compose.yml` file to point to your new image.
+and it'll do it all for you using the provided `docker-compose.yml` file.  The script
+will not build a new image; it will pull the published image down from docker hub.
+
+However, you probably will want to integrate this into your own
+project as an appliance (see next section).
 
 ### Add it to your project's docker-compose.yml
 
@@ -43,7 +45,7 @@ canvas-kinesis:
     VIRTUAL_PORT: 4567
 
 canvas-web: &WEB
-  image: gimme-dat-canvas
+  image: freedomben/canvas-lms
   links:
     - canvas-consul
     - canvas-postgres
