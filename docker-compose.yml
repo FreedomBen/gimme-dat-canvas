@@ -39,6 +39,7 @@ canvas-web: &WEB
   environment:
     RACK_ENV: development
     VIRTUAL_HOST: canvas.docker
+    VIRTUAL_PORT: 3000
 
 canvas-jobs:
   <<: *WEB
