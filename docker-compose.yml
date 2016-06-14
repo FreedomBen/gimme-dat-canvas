@@ -28,7 +28,7 @@ canvas-kinesis:
     VIRTUAL_HOST: kinesis.docker
     VIRTUAL_PORT: 4567
 
-canvas-web: &WEB
+canvas-web: &CANVAS_WEB
   image: gimme-dat-canvas
   links:
     - canvas-consul
@@ -42,5 +42,5 @@ canvas-web: &WEB
     VIRTUAL_PORT: 3000
 
 canvas-jobs:
-  <<: *WEB
+  <<: *CANVAS_WEB
   command: bundle exec script/delayed_job run
