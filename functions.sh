@@ -61,3 +61,37 @@ yellow ()
     echo -e "${yellow}${1}${restore}"
 }
 
+CHANNEL='docker'
+USERNAME='canvas-lms docker appliance build bot'
+ICON_EMOJI=':docker:'
+
+send_message ()
+{
+  curl --data "token=${SLACK_TOKEN}&channel=${CHANNEL}&text=${1}&username=${USERNAME}&icon_emoji=${ICON_EMOJI}" 'https://slack.com/api/chat.postMessage'
+}
+
+build_failed ()
+{
+  send_message "canvas-lms docker build of '$1' failed :disappointed:"
+}
+
+build_succeeded ()
+{
+   send_message "canvas-lms docker build of '$1' succeeded!"
+}
+
+build_pushed ()
+{
+   send_message "canvas-lms docker image '$1' was successfuly pushed up to docker hub :danceparrot:"
+}
+
+build_tagged ()
+{
+   send_message "canvas-lms docker image '$1' successfuly tagged as '$2'"
+}
+
+push_failed ()
+{
+   send_message "canvas-lms docker image '$1' was not pushed up to docker hub because the push failed :doh: :disappointed: :fail:"
+}
+

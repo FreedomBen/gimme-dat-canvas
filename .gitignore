@@ -1,3 +1,5 @@
 canvas-lms
 pg_data
 Dockerfile
+slack-token.txt
+*.log
