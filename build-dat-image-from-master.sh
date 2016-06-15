@@ -54,7 +54,6 @@ FROM $PREL_IMG_NAME
 COPY canvas-lms /usr/src/app
 
 USER root
-RUN usermod -u $(id -u) docker
 COPY setup-db.sh /usr/src/app
 RUN chmod +x /usr/src/app/setup-db.sh
 RUN chown -R docker:docker /usr/src/app
