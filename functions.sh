@@ -82,12 +82,12 @@ build_succeeded ()
 
 build_pushed ()
 {
-   send_message "canvas-lms docker image '$1' was successfuly pushed up to docker hub :danceparrot:"
+   send_message "canvas-lms docker image '$1' was successfully pushed up to docker hub :danceparrot:"
 }
 
 build_tagged ()
 {
-   send_message "canvas-lms docker image '$1' successfuly tagged as '$2'"
+   send_message "canvas-lms docker image '$1' successfully tagged as '$2'"
 }
 
 push_failed ()
