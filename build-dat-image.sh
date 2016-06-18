@@ -69,7 +69,8 @@ RUN bundle exec rake canvas:compile_assets
 __EOF__
 
 green "Building our canvas image (this will have assets compiled and other things)"
-docker build -t gimme-dat-canvas . || die "Error building our gimme-dat-canvas image"
+IMAGE_TAG="$(echo $REL | sed -e 's|.*/||g' | sed -e 's/\./-/g')"
+docker build -t freedomben/canvas-lms:$IMAGE_TAG -t freedomben/canvas-lms:latest . || die "Error building our gimme-dat-canvas image"
 
 green "Success!\n"
 

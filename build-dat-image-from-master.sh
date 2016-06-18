@@ -17,6 +17,14 @@ if [ -d 'pg_data' ]; then
   exit 1
 fi
 
+S3_PREFIX='master'
+S3_BUCKET="gimme-dat-canvas-build-cache/${S3_PREFIX}"
+
+# Download the latest node_modules from s3
+for tarball in node_modules.tar.gz client_apps-canvas_quizzes-node_modules.tar.gz gems-canvas_i18nliner-node_modules.tar.gz; do
+  aws s3 cp s3://${S3_BUCKET}/${tarball} ./
+done
+
 # build the regular canvas image that we'll extend
 green "Building the regular canvas dev image..."
 if [ -d 'canvas-lms' ]; then
@@ -36,6 +44,9 @@ cp docker-compose/config/* config/
 green "Updating config files for gimme-dat-canvas docker-compose container names"
 sed -i -e 's|host.*postgres|host: canvas-postgres|g' 'config/database.yml'
 sed -i -e 's|redis.*redis|redis://canvas-redis|g' 'config/redis.yml'
+
+green "Removing phantomjs from package.json due to bitbucket rate limiting"
+sed -i -e '/phantomjs-prebuilt/d' 'package.json'
 
 REL_TAG="$(date +'%Y%m%d_%H%M%S')"
 PREL_IMG_NAME="canvas-master-${REL_TAG}"
@@ -62,6 +73,19 @@ USER docker
 ENV PATH \$PATH:\$GEM_HOME/bin
 
 RUN bundle install
+
+# Sad hack to avoid bitbucket throttling during npm install
+COPY node_modules.tar.gz /usr/src/app/
+COPY client_apps-canvas_quizzes-node_modules.tar.gz /usr/src/app/client_apps/canvas_quizzes/
+COPY gems-canvas_i8nliner-node_modules.tar.gz /usr/src/app/gems/canvas_i18nliner/
+WORKDIR /usr/src/app
+RUN tar xzvf node_modules.tar.gz && rm -f node_modules.tar.gz
+WORKDIR /usr/src/app/client_apps/canvas_quizzes
+RUN tar xzvf client_apps-canvas_quizzes-node_modules.tar.gz && rm -f client_apps-canvas_quizzes-node_modules.tar.gz
+WORKDIR /usr/src/app/gems/canvas_i18nliner
+RUN tar xzvf gems-canvas_i8nliner-node_modules.tar.gz && rm -f gems-canvas_i8nliner-node_modules.tar.gz
+WORKDIR /usr/src/app
+
 RUN npm install
 
 RUN bundle exec rake canvas:compile_assets
@@ -87,22 +111,20 @@ else
   push_failed $push_name
 fi
 
-green "Success!\n"
+# Copy out the node_modules and archive the node_modules to s3
+CONTAINER_NAME=temp-canvas-to-copy
+docker run --rm --name ${CONTAINER_NAME} ${IMG_NAME} nc -l 9999
+for dirname in node_modules client_apps/canvas_quizzes/node_modules gems/canvas_i18nliner/node_modules; do
+  tarball_name="$(echo $dirname | sed -e 's|/|-|g').tar.gz"
+  green "Copying $dirname to ./node_modules"
+  docker cp ${CONTAINER_NAME}:/usr/src/app/${dirname} ./     && \
+  green "Tarring ./node_modules to $tarball_name"               && \
+  tar czf $tarball_name node_modules                         && \
+  green "Pushing $tarball_name to s3 bucket '$S3_BUCKET'"     && \
+  aws s3 cp $tarball_name s3://${S3_BUCKET}/${tarball_name}
+  rm -f $tarball_name
+  rm -rf node_modules
+done
+docker kill ${CONTAINER_NAME}
 
-cyan "* Now what? *\n"
-
-cyan "This is a good question.  Now you can run 'start-dat-canvas.sh'"
-cyan "To get a running canvas.  If you'd like to incorporate the new"
-cyan "image into another project, merge the provided"
-cyan "docker-compose.yml file into your own.  Note that before"
-cyan "starting canvas for the first time, you will need to run"
-cyan ""
-cyan "    docker run --rm gimme-dat-canvas /usr/src/app/setup-db.sh"
-cyan ""
-cyan "If you use 'start-dat-canvas.sh', this is done for you"
-cyan ""
-cyan "If you are updating an existing canvas by replacing it with"
-cyan "this new image, you will need to run migrations"
-cyan ""
-cyan "    docker run --rm gimme-dat-canvas bundle exec rake db:migrate"
-cyan ""
+echo "Done copying to s3"
