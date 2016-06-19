@@ -146,7 +146,12 @@ docker rmi ${PREL_IMG_NAME}
 docker rmi ${IMG_PLUS_REL}
 docker rmi ${IMG_NAME}:latest
 
-green 'Running docker-janitor'
-dj clean
+if which dj; then
+  green 'Running docker-janitor'
+  dj clean
+else
+  yellow 'docker-janitor is not installed.  "gem install docker-janitor"'
+  yellow 'not cleaning up'
+fi
 
 green 'All finished!'
