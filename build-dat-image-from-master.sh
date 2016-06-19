@@ -118,7 +118,7 @@ fi
 if docker push ${IMG_NAME}:latest; then
   build_tagged "${IMG_PLUS_REL}" "latest"
 else
-  push_failed $push_name
+  push_failed ${IMG_NAME}:latest
 fi
 
 # Copy out the node_modules and archive the node_modules to s3

@@ -82,7 +82,7 @@ build_succeeded ()
 
 build_pushed ()
 {
-   send_message "canvas-lms docker image '$1' was successfully pushed up to docker hub :danceparrot:"
+   send_message "canvas-lms docker image '$1' was successfully pushed up to docker hub"
 }
 
 build_tagged ()
@@ -95,3 +95,7 @@ push_failed ()
    send_message "canvas-lms docker image '$1' was not pushed up to docker hub because the push failed :doh: :disappointed: :fail:"
 }
 
+is_stable ()
+{
+  [[ $BUILD =~ stable ]]
+}
