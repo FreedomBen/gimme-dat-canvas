@@ -22,7 +22,7 @@ fi
 S3_PREFIX='master'
 S3_BUCKET="gimme-dat-canvas-build-cache/${S3_PREFIX}"
 
-if $(( USE_S3_FOR_NM )); then
+if (( $USE_S3_FOR_NM )); then
   # Download the latest node_modules from s3
   green 'Downloading the latest node_modules from s3 to avoid bitbucket rate limiting'
   for tarball in node_modules.tar.gz client_apps-canvas_quizzes-node_modules.tar.gz gems-canvas_i18nliner-node_modules.tar.gz; do
@@ -62,7 +62,7 @@ cd $root_dir
 
 RATE_LIMITING_HACK=''
 
-if $(( USE_S3_FOR_NM )); then
+if (( $USE_S3_FOR_NM )); then
 read -r -d '' RATE_LIMITING_HACK <<'__EOF__'
 # Sad hack to avoid bitbucket throttling during npm install
 USER root
@@ -122,7 +122,7 @@ else
 fi
 
 # Copy out the node_modules and archive the node_modules to s3
-if $(( USE_S3_FOR_NM )); then
+if (( $USE_S3_FOR_NM )); then
   CONTAINER_NAME=temp-canvas-to-copy
   docker run --rm --name ${CONTAINER_NAME} ${IMG_NAME} nc -l 9999
   for dirname in node_modules client_apps/canvas_quizzes/node_modules gems/canvas_i18nliner/node_modules; do
@@ -140,3 +140,13 @@ if $(( USE_S3_FOR_NM )); then
   docker kill ${CONTAINER_NAME}
   green "Done copying to s3"
 fi
+
+green 'Deleting image locally'
+docker rmi ${PREL_IMG_NAME}
+docker rmi ${IMG_PLUS_REL}
+docker rmi ${IMG_NAME}:latest
+
+green 'Running docker-janitor'
+dj clean
+
+green 'All finished!'
