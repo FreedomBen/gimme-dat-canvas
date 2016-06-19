@@ -1,4 +1,15 @@
+#!/usr/bin/env bash
+
+if [[ $1 =~ stable ]]; then
+  BUILD=stable
+  IMG_NAME="freedomben/canvas-lms"
+else
+  BUILD=master
+  IMG_NAME="freedomben/canvas-lms-unstable"
+fi
+
 USE_S3_FOR_NM=1
+S3_BUCKET="gimme-dat-canvas-build-cache/${BUILD}"
 
 if [ -f 'functions.sh' ]; then
   . functions.sh
@@ -19,8 +30,11 @@ if [ -d 'pg_data' ]; then
   exit 1
 fi
 
-S3_PREFIX='master'
-S3_BUCKET="gimme-dat-canvas-build-cache/${S3_PREFIX}"
+if is_stable; then
+  green "Building latest stable release"
+else
+  green "Building latest version of master"
+fi
 
 if (( $USE_S3_FOR_NM )); then
   # Download the latest node_modules from s3
@@ -43,6 +57,16 @@ fi
 
 cd canvas-lms || die "No canvas checkout available"
 
+if is_stable; then
+  CO_REL_TAG="$(git tag | tail -n1)"
+  REL_TAG="$(echo $CO_REL_TAG | sed -e 's|.*/||g')"
+  PREL_IMG_NAME="canvas-release-${REL_TAG}"
+else
+  REL_TAG="$(date +'%Y%m%d_%H%M%S')"
+  PREL_IMG_NAME="canvas-master-${REL_TAG}"
+fi
+IMG_PLUS_REL="${IMG_NAME}:${REL_TAG}"
+
 green "Copying config files"
 cp docker-compose/config/* config/
 
@@ -50,10 +74,10 @@ green "Updating config files for gimme-dat-canvas docker-compose container names
 sed -i -e 's|host.*postgres|host: canvas-postgres|g' 'config/database.yml'
 sed -i -e 's|redis.*redis|redis://canvas-redis|g' 'config/redis.yml'
 
-REL_TAG="$(date +'%Y%m%d_%H%M%S')"
-PREL_IMG_NAME="canvas-master-${REL_TAG}"
-IMG_NAME="freedomben/canvas-lms-unstable"
-IMG_PLUS_REL="${IMG_NAME}:${REL_TAG}"
+if is_stable; then
+  green "Using release '$CO_REL_TAG'"
+  git checkout -f $CO_REL_TAG || die "Error checking out release '$CO_REL_TAG'"
+fi
 
 green "Building dev image named '$PREL_IMG_NAME'.  This might take awhile"
 docker build -t "$PREL_IMG_NAME" docker-compose/ || die "Error building image $PREL_IMG_NAME"
