@@ -10,6 +10,7 @@ fi
 
 USE_S3_FOR_NM=1
 S3_BUCKET="gimme-dat-canvas-build-cache/${BUILD}"
+USE_RL_HACK=$USE_S3_FOR_NM
 
 if [ -f 'functions.sh' ]; then
   . functions.sh
@@ -40,7 +41,11 @@ if (( $USE_S3_FOR_NM )); then
   # Download the latest node_modules from s3
   green 'Downloading the latest node_modules from s3 to avoid bitbucket rate limiting'
   for tarball in node_modules.tar.gz client_apps-canvas_quizzes-node_modules.tar.gz gems-canvas_i18nliner-node_modules.tar.gz; do
-    aws s3 cp s3://${S3_BUCKET}/${tarball} ./
+    if ! aws s3 cp s3://${S3_BUCKET}/${tarball} ./; then
+      USE_RL_HACK=0
+      yellow "node_module download of '$tarball' from s3 failed.  disabling rate limiting hack"
+      break
+    fi
   done
 fi
 
@@ -86,7 +91,8 @@ cd $root_dir
 
 RATE_LIMITING_HACK=''
 
-if (( $USE_S3_FOR_NM )); then
+if (( $USE_RL_HACK )); then
+  green 'Using rate limiting hack'
 read -r -d '' RATE_LIMITING_HACK <<'__EOF__'
 # Sad hack to avoid bitbucket throttling during npm install
 USER root
@@ -101,6 +107,8 @@ WORKDIR /usr/src/app/gems/canvas_i18nliner
 RUN tar xzf gems-canvas_i18nliner-node_modules.tar.gz && rm -f gems-canvas_i18nliner-node_modules.tar.gz
 WORKDIR /usr/src/app
 __EOF__
+else
+  yellow 'Not using rate limiting hack'
 fi
 
 # build the extension image:
