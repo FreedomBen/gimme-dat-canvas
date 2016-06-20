@@ -157,7 +157,7 @@ fi
 if (( $USE_S3_FOR_NM )); then
   green 'Caching node_modules in s3'
   CONTAINER_NAME=temp-canvas-to-copy
-  docker run --detach --rm --name ${CONTAINER_NAME} ${IMG_NAME} nc -l 9999
+  docker run --detach --name ${CONTAINER_NAME} ${IMG_NAME} nc -l 9999
   green 'Waiting 5 seconds for the container to start to avoid race conditions'
   sleep 5
   green 'copying the node_modules from the container and pushing to s3'
@@ -174,6 +174,7 @@ if (( $USE_S3_FOR_NM )); then
     rm -rf node_modules
   done
   docker kill ${CONTAINER_NAME}
+  docker rm ${CONTAINER_NAME}
   green "Done copying to s3"
 fi
 
