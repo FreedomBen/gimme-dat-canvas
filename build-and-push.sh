@@ -147,8 +147,12 @@ fi
 
 # Copy out the node_modules and archive the node_modules to s3
 if (( $USE_S3_FOR_NM )); then
+  green 'Caching node_modules in s3'
   CONTAINER_NAME=temp-canvas-to-copy
-  docker run --rm --name ${CONTAINER_NAME} ${IMG_NAME} nc -l 9999
+  docker run --detach --rm --name ${CONTAINER_NAME} ${IMG_NAME} nc -l 9999
+  green 'Waiting 5 seconds for the container to start to avoid race conditions'
+  sleep 5
+  green 'copying the node_modules from the container and pushing to s3'
   for dirname in node_modules client_apps/canvas_quizzes/node_modules gems/canvas_i18nliner/node_modules; do
     tarball_name="$(echo $dirname | sed -e 's|/|-|g').tar.gz"
     green "Copying $dirname to ./node_modules"
@@ -170,9 +174,9 @@ docker rmi ${PREL_IMG_NAME}
 docker rmi ${IMG_PLUS_REL}
 docker rmi ${IMG_NAME}:latest
 
-if which dj; then
+if which docker-janitor; then
   green 'Running docker-janitor'
-  dj clean
+  docker-janitor clean
 else
   yellow 'docker-janitor is not installed.  "gem install docker-janitor"'
   yellow 'not cleaning up'
