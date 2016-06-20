@@ -85,7 +85,7 @@ if is_stable; then
 fi
 
 green "Building dev image named '$PREL_IMG_NAME'.  This might take awhile"
-docker build -t "$PREL_IMG_NAME" docker-compose/ || die "Error building image $PREL_IMG_NAME"
+#docker build -t "$PREL_IMG_NAME" docker-compose/ || die "Error building image $PREL_IMG_NAME"
 
 cd $root_dir
 
@@ -163,6 +163,8 @@ if (( $USE_S3_FOR_NM )); then
   green 'copying the node_modules from the container and pushing to s3'
   for dirname in node_modules client_apps/canvas_quizzes/node_modules gems/canvas_i18nliner/node_modules; do
     tarball_name="$(echo $dirname | sed -e 's|/|-|g').tar.gz"
+    rm -rf node_modules
+    rm -f $tarball_name
     green "Copying $dirname to ./node_modules"
     docker cp ${CONTAINER_NAME}:/usr/src/app/${dirname} ./     && \
     green "Tarring ./node_modules to $tarball_name"            && \
