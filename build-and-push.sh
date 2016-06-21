@@ -85,7 +85,7 @@ if is_stable; then
 fi
 
 green "Building dev image named '$PREL_IMG_NAME'.  This might take awhile"
-#docker build -t "$PREL_IMG_NAME" docker-compose/ || die "Error building image $PREL_IMG_NAME"
+docker build -t "$PREL_IMG_NAME" docker-compose/ || die "Error building image $PREL_IMG_NAME"
 
 cd $root_dir
 
